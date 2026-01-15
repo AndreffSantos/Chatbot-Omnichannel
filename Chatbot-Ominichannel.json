@@ -1,0 +1,467 @@
+{
+  "name": "Chatbot Omnichannel - Atendimento Automático",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook",
+        "options": {}
+      },
+      "name": "Webhook Entrada",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1072,
+        -144
+      ],
+      "id": "b83a0784-5f37-4b6e-ba67-67e3db44a193",
+      "webhookId": "da194e4d-3f8a-416f-9d56-dfbb3332a5f2"
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://graph.instagram.com/v24.0/17841451224855274/messages",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"recipient\": {\n    \"id\": {{ $('Normalizar Mensagem').item.json.userId }}\n  },\n  \"message\": {\n    \"text\": \"{{ $json.output }}\"\n  }\n} ",
+        "headerParametersJson": "{\n\"Authorization\": \"Bearer IGAAQbVC020WRBZAFpJTXdSb2VOa1JFQVJRYTdPdG4wNUxDc0dNNWJJM0phWkpsT3Fzam0wdFdGMTBYV0FLM3pxaXQtaTNrRE05Snk0WjFPdVAxeGl4QzYwYmtvb2hMNVdTZA1hRcnNrbWp3ZA3FEX2JkVXlHZAXQ1Q2JxUlk2Y2xYQQZDZD\"\n}"
+      },
+      "name": "Enviar Resposta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        352,
+        -256
+      ],
+      "id": "8316257a-d567-41fc-a844-5a093f192bca"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -848,
+        -496
+      ],
+      "id": "352d865d-0fac-4ed5-b52a-f68c1c240930",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "Você é um assistente prestativo."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -256,
+        -144
+      ],
+      "id": "35f23787-f5d6-4596-adb0-656495bc30d9",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -288,
+        80
+      ],
+      "id": "c7e901dd-1a0b-4c97-9dcd-c70d65b67758",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "EdxeZCXNToJe7w72",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const body = items[0].json.body;\n\nreturn [{\n  json: {\n    channel: body.object,\n    userId: body.entry[0].messaging[0].sender.id,\n    text: body.entry[0].messaging[0].message.text\n  }\n}];"
+      },
+      "name": "Normalizar Mensagem",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        -144
+      ],
+      "id": "b3656916-c579-4e41-a672-76c34dd5b4b4"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Webhook Entrada').item.json.body.entry[0].messaging[0].sender.id }}",
+                    "rightValue": "17841451224855274",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    },
+                    "id": "9131a2f0-5718-4cfb-a29a-6e8ded2356d6"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -464,
+        -144
+      ],
+      "id": "c92ec930-3436-4568-96d3-ef1cec34bc24",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v24.0/169704199567200/messages?access_token=EAAWSfSrYdSwBQetFmOZBMue0MVUm5FX5aNuVxCi7pe6fhIeuUmq5OKX7bQyZCcW3s5b9guzoLRz7SUTQ0tRQISddpZAdXlHZCZCuhZBiSGF1pST9CmlNc2Gbv9Dg6bV8CLcKob3JhZABeEwD0kdzrZCOlZBDVBYZAq3XZBtcO8iAEHTf26vkZAtneRqBjqo8IHcny3OlSd7V",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "recipient.id",
+              "value": "={{ $('Normalizar Mensagem').item.json.userId }}"
+            },
+            {
+              "name": "messaging_type",
+              "value": "RESPONSE"
+            },
+            {
+              "name": "message.text",
+              "value": "={{ $('AI Agent').item.json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        352,
+        -64
+      ],
+      "id": "edd585eb-f5f6-4e80-b7a8-de9ea34f0cf9",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Normalizar Mensagem').item.json.channel }}",
+                    "rightValue": "instagram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "29a9f9ef-d6f4-4944-bd65-f9e8b533ec4b"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "instagram"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "58e17076-6c80-4a61-8442-b78fef9ccbc8",
+                    "leftValue": "={{ $('Normalizar Mensagem').item.json.channel }}",
+                    "rightValue": "page",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "messenger"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        96,
+        -144
+      ],
+      "id": "94b0d8a5-9a78-45e2-a4ee-32270cee0d73",
+      "name": "Selecionar pagina de mensagem"
+    },
+    {
+      "parameters": {
+        "content": "## Webhook\nesse é o webhook que irá receber todas as notificações quando chegar mensagens nos canais (whatsapp, facebook messenger e instagram) \n",
+        "height": 272,
+        "width": 336,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1248,
+        -272
+      ],
+      "typeVersion": 1,
+      "id": "8959a0ce-230f-4db7-a85f-ac29c087e07d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## \naqui separamos quem esta enviando a mensagem qual a mensagem e o canal. Essas informações serão importantes nos proximos nós.\n",
+        "height": 256,
+        "width": 352,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -864,
+        -256
+      ],
+      "typeVersion": 1,
+      "id": "167e1122-30ff-4d90-87e6-4697d11b4d60",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## OBS\nDeixei esse nó aqui pois ele é usado quando vamos cadastrar o webhook no meta developer. isso esta na documentação no [meta developer](https://developers.facebook.com/)",
+        "height": 256,
+        "width": 512
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1200,
+        -624
+      ],
+      "typeVersion": 1,
+      "id": "d93f413a-4fe0-47c9-95a4-142734af41fd",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## I'm a note \nAqui direciona para fazer a requisição para o endpoint correto dependendo do canal.",
+        "height": 272
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -16,
+        -304
+      ],
+      "typeVersion": 1,
+      "id": "690f4052-9a2d-4dbf-824b-7372ac1b4565",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {
+    "Webhook Entrada": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n-service-9kj8.onrender.com",
+            "user-agent": "facebookexternalua",
+            "content-length": "393",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1",
+            "cf-connecting-ip": "173.252.83.112",
+            "cf-ipcountry": "US",
+            "cf-ray": "9bde81efddc544bc-DFW",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "content-type": "application/json",
+            "instagram-api-version": "v24.0",
+            "render-proxy-ttl": "4",
+            "rndr-id": "413cec15-c500-45ef",
+            "true-client-ip": "173.252.83.112",
+            "x-forwarded-for": "173.252.83.112, 162.159.104.7, 10.18.92.175",
+            "x-forwarded-proto": "https",
+            "x-hub-signature": "sha1=3c3530a5a465a17a6af6014cebfceaa772387474",
+            "x-hub-signature-256": "sha256=a6f8ab4bde42aafe67fd0db8b0ad0494ff9a5698d68529046bc0fe897973dbd0",
+            "x-request-start": "1768408117898509"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "object": "instagram",
+            "entry": [
+              {
+                "time": 1768408117558,
+                "id": "17841451224855274",
+                "messaging": [
+                  {
+                    "sender": {
+                      "id": "6997264400365531"
+                    },
+                    "recipient": {
+                      "id": "17841451224855274"
+                    },
+                    "timestamp": 1768408117260,
+                    "message": {
+                      "mid": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDUxMjI0ODU1Mjc0OjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI1OTQ4MDI1NDA2MTI5Nzk0ODozMjYyMTM3MTk1Njk3NjgyMDQzNzAyOTUwMjUxMzU3Nzk4NAZDZD",
+                      "text": "OI"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "webhookUrl": "https://n8n-service-9kj8.onrender.com/webhook/webhook",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Normalizar Mensagem": [
+      {
+        "json": {
+          "channel": "instagram",
+          "userId": "6997264400365531",
+          "text": "A"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook Entrada": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Selecionar pagina de mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Selecionar pagina de mensagem": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "c297aa29-3fc1-4615-9daa-5288aa44355a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b2400c014769779478a573759fe40e03642279b80693664217de9ced983a8e81"
+  },
+  "id": "JMR-L4t7RnpKtTmkDINCn",
+  "tags": []
+}
